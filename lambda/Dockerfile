@@ -6,11 +6,8 @@ COPY . .
 
 RUN cargo lambda build --release --arm64
 
-RUN chmod a+x /lambda/target/lambda/bootstrap
 
-
-FROM public.ecr.aws/lambda/provided:al2
-
-COPY --from=build /lambda/target/lambda/bootstrap ./bootstrap
-
+FROM public.ecr.aws/lambda/provided:al2023
+# cargo lambda builds an executable 'bootstrao' and 'core'
+COPY --from=build /lambda/target/lambda/bootstrap/ ./
 ENTRYPOINT [ "./bootstrap" ]

@@ -19,7 +19,7 @@ export class InfraStack extends Stack {
   constructor(scope: Construct, id: string, props: LambdaStackProps) {
     super(scope, id, props);
 
-    const lambdaDockerImageTag = process.env.DOCKER_TAG ?? 'latest';
+    const lambdaDockerImageTag = process.env.DOCKER_TAG ?? 'NO_TAG';
     const repo = Repository.fromRepositoryName(this, 'Repo', props.repositoryName);
 
     /*
