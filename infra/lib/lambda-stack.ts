@@ -7,7 +7,8 @@ import {
   TableV2,
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Repository } from 'aws-cdk-lib/aws-ecr';
-import { Code, Function as LFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { Architecture, Code, Handler, Function as LFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import type { Construct } from 'constructs';
 
 export interface LambdaStackProps extends StackProps {
@@ -34,11 +35,13 @@ export class InfraStack extends Stack {
     */
 
     new LFunction(this, 'RustLambda', {
-      runtime: Runtime.PROVIDED_AL2,
+      runtime: Runtime.FROM_IMAGE,
+      architecture: Architecture.ARM_64,
       code: Code.fromEcrImage(repo, {
         tag: lambdaDockerImageTag,
       }),
-      handler: 'bootstrap',
+      handler: Handler.FROM_IMAGE,
+      logRetention: RetentionDays.ONE_DAY,
     });
 
     // dynamoTable.grantReadWriteData(rustLambda);

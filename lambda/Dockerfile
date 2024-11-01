@@ -6,6 +6,8 @@ COPY . .
 
 RUN cargo lambda build --release --arm64
 
+RUN chmod a+x /lambda/target/lambda/bootstrap
+
 
 FROM public.ecr.aws/lambda/provided:al2
 
