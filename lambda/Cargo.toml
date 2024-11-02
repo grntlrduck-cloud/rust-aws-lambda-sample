@@ -4,8 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+aws-config = "1.5.9"
+aws-sdk-dynamodb = "1.52.0"
 
 lambda_runtime = "0.13.0"
 serde = "1"
+time = { version = "0.3.36", features = ["formatting", "macros"] }
 tokio = { version = "1", features = ["macros"] }
 

@@ -1,48 +1,65 @@
-
+use aws_config::BehaviorVersion;
 use lambda_runtime::{run, service_fn, tracing, Error, LambdaEvent};
-
+use aws_sdk_dynamodb::{self as dynamodb};
+use time::{OffsetDateTime, format_description};
 use serde::{Deserialize, Serialize};
+use std::env;
 
-/// This is a made-up example. Requests come into the runtime as unicode
-/// strings in json format, which can map to any structure that implements `serde::Deserialize`
-/// The runtime pays no attention to the contents of the request payload.
+
 #[derive(Deserialize)]
 struct Request {
     command: String,
 }
 
-/// This is a made-up example of what a response structure may look like.
-/// There is no restriction on what it can be. The runtime requires responses
-/// to be serialized into json. The runtime pays no attention
-/// to the contents of the response payload.
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct Response {
     req_id: String,
     msg: String,
 }
 
-/// This is the main body for the function.
-/// Write your code inside it.
-/// There are some code example in the following URLs:
-/// - https://github.com/awslabs/aws-lambda-rust-runtime/tree/main/examples
-/// - https://github.com/aws-samples/serverless-rust-demo/
-async fn function_handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
-    // Extract some useful info from the request
-    let command = event.payload.command;
+#[derive(Serialize, Deserialize)]
+struct DynamoMessage {
+    pk: String,
+    request_id: String,
+    command: String,
+    received_at: String
+}
 
-    // Prepare the response
+async fn function_handler(client: &dynamodb::Client,event: LambdaEvent<Request>) -> Result<Response, Error> {
+
     let resp = Response {
         req_id: event.context.request_id,
-        msg: format!("Command {}.", command),
+        msg: String::from("command processed"),
     };
 
-    // Return `Response` (it will be serialized to JSON automatically by the runtime)
+    let dt: OffsetDateTime = OffsetDateTime::now_utc();
+    let format = format_description::parse("[year]-[month]-[day] [hour]:[minute]:[second]").unwrap();
+    let dynamo_message = DynamoMessage{
+        pk: resp.req_id.clone(),
+        request_id: resp.req_id.clone(),
+        command: event.payload.command,
+        received_at: dt.format(&format).unwrap()
+    };
+    let table_str = env::var("DYNAMO_TABLE_NAME").unwrap();
+    client.put_item()
+        .table_name(table_str)
+        .item("pk", dynamodb::types::AttributeValue::S(dynamo_message.pk))
+        .item("request_id", dynamodb::types::AttributeValue::S(dynamo_message.request_id))
+        .item("command", dynamodb::types::AttributeValue::S(dynamo_message.command))
+        .item("received_at", dynamodb::types::AttributeValue::S(dynamo_message.received_at));
+    
     Ok(resp)
 }
+
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
-
-    run(service_fn(function_handler)).await
+    let config = aws_config::load_defaults(BehaviorVersion::latest()).await;
+    let client = dynamodb::Client::new(&config);
+    let shared_client = &client;
+    run(service_fn(move |event: LambdaEvent<Request>| async move {
+        function_handler(&shared_client, event).await
+    }))
+    .await
 }
