@@ -7,7 +7,13 @@ import {
   TableV2,
 } from 'aws-cdk-lib/aws-dynamodb';
 import { Repository } from 'aws-cdk-lib/aws-ecr';
-import { Architecture, Code, Handler, Function as LFunction, Runtime } from 'aws-cdk-lib/aws-lambda';
+import {
+  Architecture,
+  Code,
+  Handler,
+  Function as LFunction,
+  Runtime,
+} from 'aws-cdk-lib/aws-lambda';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
 import type { Construct } from 'constructs';
 
@@ -22,8 +28,7 @@ export class InfraStack extends Stack {
     const lambdaDockerImageTag = process.env.DOCKER_TAG ?? 'NO_TAG';
     const repo = Repository.fromRepositoryName(this, 'Repo', props.repositoryName);
 
-    /*
-     const dynamoTable = new TableV2(this, 'MessageTable', {
+    const dynamoTable = new TableV2(this, 'MessageTable', {
       partitionKey: { name: 'pk', type: AttributeType.STRING },
       removalPolicy: RemovalPolicy.DESTROY,
       billing: Billing.provisioned({
@@ -32,18 +37,20 @@ export class InfraStack extends Stack {
       }),
       encryption: TableEncryptionV2.awsManagedKey(),
     });
-    */
 
-    new LFunction(this, 'RustLambda', {
+    const rustLambda = new LFunction(this, 'RustLambda', {
       runtime: Runtime.FROM_IMAGE,
       architecture: Architecture.ARM_64,
       code: Code.fromEcrImage(repo, {
-        tag: lambdaDockerImageTag,
+        tagOrDigest: lambdaDockerImageTag,
       }),
       handler: Handler.FROM_IMAGE,
       logRetention: RetentionDays.ONE_DAY,
+      environment: {
+        DYNAMO_TABLE_NAME: dynamoTable.tableName,
+      },
     });
 
-    // dynamoTable.grantReadWriteData(rustLambda);
+    dynamoTable.grantReadWriteData(rustLambda);
   }
 }

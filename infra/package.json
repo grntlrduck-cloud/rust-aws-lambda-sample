@@ -11,6 +11,7 @@
     "cdk": "cdk",
     "synth": "cdk synth",
     "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
     "format": "biome format --write ./",
     "lint-fix": "biome lint --write --unsafe ./",
     "lint": "biome lint --error-on-warnings ./",

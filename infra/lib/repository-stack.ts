@@ -18,7 +18,7 @@ export class RepositoryStack extends Stack {
       ],
       imageScanOnPush: true,
       imageTagMutability: TagMutability.IMMUTABLE,
-      autoDeleteImages: true,
+      emptyOnDelete: true,
       removalPolicy: RemovalPolicy.DESTROY,
     });
   }

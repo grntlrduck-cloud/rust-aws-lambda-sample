@@ -6,7 +6,7 @@ import { RepositoryStack } from '../lib/repository-stack';
 
 const account = '211125782845';
 const region = 'eu-west-1';
-const ecrRepoName = 'rust-lambda-sample'
+const ecrRepoName = 'rust-lambda-sample';
 
 const app = new cdk.App();
 
@@ -16,7 +16,7 @@ new RepositoryStack(app, 'rust-lambda-repo-stack', {
     region: region,
   },
   repositoryName: ecrRepoName,
-})
+});
 
 new InfraStack(app, 'rust-lambda-sample-app-stack', {
   env: {
